@@ -56,4 +56,3 @@ class Home:
         }
         res.body = json.dumps(response_dict)
         self.logger.info(f'End.')
-
