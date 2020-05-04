@@ -23,7 +23,7 @@ class Report:
         self.logger.addHandler(handler)
 
     def on_get(self, req, res):
-        self.logger.info(f'Start: GET')
+        self.logger.info(f'Start Report: GET')
         res.status = falcon.get_http_status(status_code=200)
         try:
             # response = requests.get('http://www.mocky.io/v2/5ea8c3162d0000644f3a40f0')
@@ -33,34 +33,41 @@ class Report:
         except Exception as err:
             self.logger.error(f'Other error occurred: {err}')
 
-        # response_dict = response.json()
+        # scr_call = response.json()
 
         scr_call = self._mock()
-        total = 0
-        relatorio = {}
-        relatorio_full = {}
+        full_report = {}
+        a_vencer = {}
 
         for operation_item in scr_call.get('operation_items'):
-            total += operation_item.get('due_value')
-            if operation_item.get('due_type').get('due_code'):
-                due_code = str(operation_item['due_type']['due_code'])
-                if not relatorio.get(due_code):
-                    relatorio[due_code] = operation_item.get('due_value')
-                else:
-                    relatorio[due_code] += operation_item.get('due_value')
-
             due_code = str(operation_item['due_type']['due_code'])
             category_code = str(operation_item['category_sub']['category']['category_code'])
             category_sub_code = str(operation_item['category_sub']['category_sub_code'])
 
-            index = f'{category_code}_{category_sub_code}_{due_code}'
-            if not relatorio.get(index):
-                relatorio_full[index] = operation_item.get('due_value')
+            index = f'{category_code}:{category_sub_code}:{due_code}'
+            if not full_report.get(index):
+                full_report[index] = operation_item.get('due_value')
             else:
-                relatorio_full[index] += operation_item.get('due_value')
+                full_report[index] += operation_item.get('due_value')
 
-        res.body = json.dumps(relatorio_full)
-        self.logger.info(f'End.')
+            description = str(operation_item['due_type']['description'])
+            category_description = str(operation_item['category_sub']['category']['category_description'])
+
+            if not a_vencer.get(description):
+                if operation_item.get('due_value'):
+                    a_vencer[description] = {}
+                    a_vencer[description]['total'] = operation_item.get('due_value')
+                    a_vencer[description][category_description] = operation_item.get('due_value')
+            else:
+                if operation_item.get('due_value'):
+                    a_vencer[description]['total'] += operation_item.get('due_value')
+                    if not a_vencer[description].get(category_description):
+                        a_vencer[description][category_description] = operation_item.get('due_value')
+                    else:
+                        a_vencer[description][category_description] += operation_item.get('due_value')
+
+        res.body = json.dumps({'relatório visual': a_vencer, 'relatório maquina': full_report})
+        self.logger.info(f'End Report.')
 
     @staticmethod
     def _mock():

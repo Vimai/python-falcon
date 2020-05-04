@@ -34,12 +34,6 @@ class Home:
 
         response_dict = response.json()
 
-        # print("Recebido GET em {}".format(datetime.utcnow().isoformat()))
-        # response_dict = {
-        #     "company": "qi_tech",
-        #     "proccess_id": str(os.getpid())
-        # }
-
         res.body = json.dumps(response_dict)
         self.logger.info(f'End.')
 
